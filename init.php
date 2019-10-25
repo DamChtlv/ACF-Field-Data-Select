@@ -1,7 +1,7 @@
 <?php
 defined('ABSPATH') || exit;
 
-if (!class_exists('acf_field_field_data_select')) {
+if (!class_exists('acf_field_field_data_select')) :
     class acf_field_field_data_select extends acf_field {
 
         function initialize() {
@@ -32,105 +32,13 @@ if (!class_exists('acf_field_field_data_select')) {
                 'layouts'		=> array(),
             );
 
+             /** Character(s) to separate values we're going to get back with an explode on the string in load_value */
+            $this->value_sep = '--';
+
             /** Clone field */
             $this->cloning = array();
             $this->have_rows = 'single';
             acf_enable_filter('clone');
-        }
-
-        function get_clone_setting_choices( $value ) {
-
-            // vars
-            $choices = array();
-
-            // bail early if no $value
-            if( empty($value) ) return $choices;
-
-            // force value to array
-            $value = acf_get_array( $value );
-
-            // loop
-            foreach( $value as $v ) {
-                $choices[ $v ] = $this->get_clone_setting_choice( $v );
-            }
-
-            // return
-            return $choices;
-
-        }
-
-        function get_clone_setting_choice( $selector = '' ) {
-
-            // bail early no selector
-            if( !$selector ) return '';
-
-            // ajax_fields
-            if( isset($_POST['fields'][ $selector ]) ) {
-                return $this->get_clone_setting_field_choice( $_POST['fields'][ $selector ] );
-            }
-
-            // field
-            if( acf_is_field_key($selector) ) {
-                return $this->get_clone_setting_field_choice( acf_get_field($selector) );
-            }
-
-            // group
-            if( acf_is_field_group_key($selector) ) {
-                return $this->get_clone_setting_group_choice( acf_get_field_group($selector) );
-            }
-
-
-            // return
-            return $selector;
-
-        }
-
-
-        function get_clone_setting_field_choice( $field ) {
-
-            if( !$field ) return __('Unknown field', 'acf');
-
-            // title
-            $title = $field['label'] ? $field['label'] : __('(no title)', 'acf');
-
-            // append type
-            $title .= ' (' . $field['type'] . ')';
-
-            // ancestors
-            // - allow for AJAX to send through ancestors count
-            $ancestors = isset($field['ancestors']) ? $field['ancestors'] : count(acf_get_field_ancestors($field));
-            $title = str_repeat('- ', $ancestors) . $title;
-
-            // return
-            return $title;
-
-        }
-
-
-        function get_clone_setting_group_choice( $field_group ) {
-
-            if( !$field_group ) return __('Unknown field group', 'acf');
-
-            // return
-            return sprintf( __('All fields from %s field group', 'acf'), $field_group['title'] );
-
-        }
-
-
-        function get_valid_layout($layout = array()) {
-
-            $layout = wp_parse_args($layout, array(
-                'key'			=> uniqid('layout_'),
-                'name'			=> '',
-                'label'			=> '',
-                'display'		=> 'block',
-                'sub_fields'	=> array(),
-                'min'			=> '',
-                'max'			=> '',
-            ));
-
-            // return
-            return $layout;
         }
 
 
@@ -143,6 +51,10 @@ if (!class_exists('acf_field_field_data_select')) {
             // placeholder
             if (empty($field['placeholder']))
                 $field['placeholder'] = _x('Field Data Select', 'verb', 'acf');
+
+            // _print_r($choices);
+            // _print_r($value);
+            _print_r($field['clone']);
 
             // add empty value (allows '' to be selected)
             if (empty($value))
@@ -185,7 +97,7 @@ if (!class_exists('acf_field_field_data_select')) {
             /**
              *  If no clone is found, return standard select
              */
-            if (empty($field['clone']) || !acf_is_field_key($field['clone'][0]))
+            if (empty($field['clone']) || !acf_is_field_key($field['clone']))
                 return acf_select_input($select);
 
             /**
@@ -193,7 +105,7 @@ if (!class_exists('acf_field_field_data_select')) {
              */
             if (empty($field['source'])) {
 
-                $target_field               = acf_get_field($field['clone'][0]);
+                $target_field               = acf_get_field($field['clone']);
                 $target_field_name          = $target_field['name'];
 
                 /**
@@ -219,6 +131,7 @@ if (!class_exists('acf_field_field_data_select')) {
                 elseif ($target_field['type'] == 'flexible_content') {
 
                     // vars
+                    $field_flexible = acf_get_field_type('flexible_content');
                     $sub_fields = acf_get_fields($target_field);
                     $layouts    = array();
 
@@ -227,7 +140,7 @@ if (!class_exists('acf_field_field_data_select')) {
 
                         // extract layout
                         $layout = acf_extract_var($target_field['layouts'], $i);
-                        $layout = $this->get_valid_layout($layout);
+                        $layout = $field_flexible->get_valid_layout($layout);
 
                         // append sub fields
                         if (!empty($sub_fields)) {
@@ -267,6 +180,9 @@ if (!class_exists('acf_field_field_data_select')) {
                     }
                 }
 
+                /**
+                 *  Fallback value
+                 */
                 else {
 
                     $choices = array(
@@ -280,7 +196,7 @@ if (!class_exists('acf_field_field_data_select')) {
             } else {
 
                 $field_destination          = $field['source'];
-                $target_field               = get_field_object($field['clone'][0], $field_destination);
+                $target_field               = get_field_object($field['clone'], $field_destination);
                 $target_field_name          = $target_field['name'];
                 $target_field_value         = $target_field['value'];
 
@@ -319,14 +235,11 @@ if (!class_exists('acf_field_field_data_select')) {
 
                     $target_value_has_multiple_values = is_array($target_field_value) && !empty($target_field_value) && count($target_field_value) > 1;
 
-                    /** Character(s) to separate values we're going to get back with an explode on the string in load_value */
-                    $value_sep = '--';
-
                     if (!$target_value_has_multiple_values) {
 
                         $index = 0;
                         $target_field_flexible_value = $target_field_value[$index];
-                        $choice_value = $target_field_name . $value_sep . $index . $value_sep . $field_destination;
+                        $choice_value = $target_field_name . $this->value_sep . $index . $this->value_sep . $field_destination;
 
                         $target_flexible_title = $target_field_flexible_value['acfe_flexible_layout_title'] ?? $target_field_flexible_value['acf_fc_layout'];
                         $choices[$choice_value] = $target_flexible_title;
@@ -335,7 +248,7 @@ if (!class_exists('acf_field_field_data_select')) {
 
                         foreach ($target_field_value as $index => $target_field_sub_value) {
 
-                            $choice_value = $target_field_name . $value_sep . $index . $value_sep . $field_destination;
+                            $choice_value = $target_field_name . $this->value_sep . $index . $this->value_sep . $field_destination;
 
                             $target_flexible_title = $target_field_sub_value['acfe_flexible_layout_title'] ?? $target_field_sub_value['acf_fc_layout'];
                             $choices[$choice_value] = $target_flexible_title;
@@ -363,6 +276,8 @@ if (!class_exists('acf_field_field_data_select')) {
             $field['choices']       = acf_encode_choices($field['choices']);
             $field['default_value'] = acf_encode_choices($field['default_value'], false);
 
+            $clone_field_type = acf_get_field_type('clone');
+
             // temp enable 'local' to allow .json fields to be displayed
             acf_enable_filter('local');
 
@@ -374,7 +289,7 @@ if (!class_exists('acf_field_field_data_select')) {
                 'name'			=> 'clone',
                 'multiple' 		=> 0,
                 'allow_null' 	=> 1,
-                'choices'		=> $this->get_clone_setting_choices($field['clone']),
+                'choices'		=> $clone_field_type->get_clone_setting_choices($field['clone']),
                 'ui'			=> 1,
                 'ajax'			=> 1,
                 'ajax_action'	=> $this->defaults['ajax_action'],
@@ -395,6 +310,69 @@ if (!class_exists('acf_field_field_data_select')) {
         }
 
 
+        function decode_selector($value) {
+
+            if (empty($value))
+                return;
+
+            $value_array = explode($this->value_sep, $value);
+            if (empty($value_array) || count($value_array) <= 1)
+                return;
+
+            $selector = $value_array[0];
+            return $selector;
+
+        }
+
+        function decode_position($value) {
+
+            if (empty($value))
+                return;
+
+            $value_array = explode($this->value_sep, $value);
+            if (empty($value_array) || count($value_array) <= 1)
+                return;
+
+            $position = $value_array[1];
+            return $position;
+
+        }
+
+        function decode_post_id($value, $selector, $position) {
+
+            if (empty($value) || empty($selector) || empty($position))
+                return;
+
+            /** Can't trust explode for post_id because it can contains the separator character and make a false post_id */
+            $post_id = substr($value, strlen($selector) + strlen($position) + (strlen($this->value_sep) * 2));
+            return $post_id;
+
+        }
+
+
+        /**
+         * Decode string value into array
+         *
+         * @param [string] $value
+         * @return array
+         */
+        function decode_value($value) {
+
+            if (empty($value))
+                return array();
+
+            $selector   = $this->decode_selector($value);
+            $position   = $this->decode_position($value);
+            $post_id    = $this->decode_post_id($value, $selector, $position);
+
+            return array(
+                'selector'  => $selector,
+                'position'  => $position,
+                'post_id'   => $post_id,
+            );
+        }
+
+
         function load_value( $value, $post_id, $field ) {
 
             // ACF4 null
@@ -407,17 +385,14 @@ if (!class_exists('acf_field_field_data_select')) {
             if (is_array($value))
                 return $value;
 
-            /** Front value */
-            $value_sep = '--';
-            $value_array = explode($value_sep, $value);
-            if (empty($value_array) || count($value_array) <= 1)
+            /** Decode string value into array */
+            $decoded_value = $this->decode_value($value);
+            if (empty($decoded_value))
                 return $value;
 
-            $selector = $value_array[0];
-            $position = $value_array[1];
-
-            /** Can't trust explode for post_id because it can contains the separator character and make a false post_id */
-            $post_id = substr($value, strlen($selector) + strlen($position) + (strlen($value_sep) * 2));
+            $selector   = $decoded_value['selector'];
+            $position   = $decoded_value['position'];
+            $post_id    = $decoded_value['post_id'];
 
             $target_field = get_field($selector, $post_id);
             if (empty($target_field) || !is_array($target_field))
@@ -470,6 +445,7 @@ if (!class_exists('acf_field_field_data_select')) {
         }
 
     }
-}
 
-new acf_field_field_data_select();
+    acf_register_field_type('acf_field_field_data_select');
+
+endif;
