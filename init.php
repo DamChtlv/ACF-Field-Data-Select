@@ -340,7 +340,7 @@ if (!class_exists('acf_field_field_data_select')) :
 
         function decode_post_id($value, $selector, $position) {
 
-            if (empty($value) || empty($selector) || empty($position))
+            if (empty($value) || empty($selector) || $position === '')
                 return;
 
             /** Can't trust explode for post_id because it can contains the separator character and make a false post_id */
