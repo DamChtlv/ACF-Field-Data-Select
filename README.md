@@ -9,10 +9,12 @@
 
 ## How it works?
 
-In the admin, it will **render** you a **select field** so you can choose a **specific value**:
+In the **admin**, it will **render** you a **select field** so you can choose a **specific value**:
 - If you target a **checkbox / radio / select**, it will allow you to target a **specific choice**.
 - If you target a **repeater field**, it will allow you to target a **specific row**.
 - If you target a **flexible content field**, it will allow you to target a **specific layout**.
+
+On the **front**, it will **return an array matching the data you selected**.
 
 ## Example
 
