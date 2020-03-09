@@ -25,4 +25,4 @@ On the **front**, it will **return an array matching the data you selected**.
 ## Example
 
 You have a **option page** containing a **group field** with **tons of fields** inside it that is acting as a **configuration** for something.
-You **want to use** all this configuration **multiple times** for some reason, this field will allow you to target that with ACF UI and get the data like you would do it with a **get_field()**.
+You **want to use** all this configuration **multiple times** for some reason, this field will allow you to target that with ACF UI and get the data with a **get_field()** and **returning** your specific data.
