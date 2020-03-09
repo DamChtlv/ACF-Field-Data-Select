@@ -7,6 +7,12 @@
 - It allows you to **select / return data** from **another field** *(radio, checkbox, select, repeater or flexible content)* either from **default value** or from **another source** *(post/page/user/term/option page)*.
 - This way, you can use it to make a optimized **reusable* / *component-like** system.
 
+**What is the difference of this vs. Clone field?**
+
+- **Database:** **Clone field** will save a **lot of data** just like if your field merged with the targeted field / field group.
+This field instead just **save a string** *(containing field slug + index + post_id)* in the **database** and will use **get_field()** to return the data.
+- **Advanced Select:** **This field** allows you to **select:** *choices, layouts, rows, values*.
+
 ## How it works?
 
 In the **admin**, it will **render** you a **select field** so you can choose a **specific value**:
